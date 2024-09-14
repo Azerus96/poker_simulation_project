@@ -1,11 +1,18 @@
 import os
 import asyncio
+from flask import Flask
 from config import PokerTournamentConfig
 from player import PokerPlayer
 from poker_game import PokerGame
 from logging_system import Logger
 from database import TournamentDatabase
 from utils import generate_player_name
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Tournament is running!"
 
 def setup_tournament(num_players=160, load_previous_state=False):
     """Инициализация турнира, создание игроков и загрузка состояний если необходимо."""
