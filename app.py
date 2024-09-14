@@ -15,7 +15,7 @@ def home():
     return "Tournament is running!"
 
 def setup_tournament(num_players=160, load_previous_state=False):
-    """Инициализация турнира, создание игроков и загрузка состояний если необходимо."""
+    """Инициализация турнира, создание игроков и загрузка состояний, если это необходимо."""
     config = PokerTournamentConfig()
     
     players = []
@@ -74,4 +74,8 @@ async def main():
         logger.log_event(f"An error occurred: {str(e)}")
 
 if __name__ == "__main__":
+    # Запуск Flask на порту 10000
+    app.run(host="0.0.0.0", port=10000)
+
+    # Запуск асинхронной симуляции
     asyncio.run(main())
