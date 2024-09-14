@@ -101,7 +101,7 @@ class PokerGame:
                 self.pot += raise_amount
             
             await asyncio.sleep(0)  # Асинхронность
-            
+
     def showdown(self, table):
         """Определение победителя на конкретном столе."""
         hands = {player: player.hole_cards + self.community_cards for player in table}
@@ -148,25 +148,25 @@ class PokerGame:
         with open(file_name, 'rb') as f:
             return pickle.load(f)
 
-    def simulate_tournament(self):
+    async def simulate_tournament(self):
         """Запуск симуляции турнира, продолжаем до тех пор, пока не останется один победитель."""
         while len(self.players) > 1:
-            self.play_round()
+            await self.play_round()
             self.current_round += 1
 
         if len(self.players) == 1:
-            self.logger.log_event(f"The tournament winner is {self.players[0].name} with a stack of {self.players[0].stack}")
+            self.logger.log_event(f"Победитель турнира: {self.players[0].name} со стеком {self.players[0].stack}")
         else:
-            self.logger.log_event("Tournament ended with multiple players still in the game.")
+            self.logger.log_event("Турнир завершился с несколькими оставшимися игроками.")
 
-    def play_round(self):
+    async def play_round(self):
         """Игровой процесс одного раунда."""
         self.deck = self.create_deck()
         blinds = self.config.get_blinds_for_round(self.current_round)
         
-        for table in self.tables:
-            asyncio.run(self.play_one_table(table, blinds))
-
+        coroutines = [self.play_one_table(table, blinds) for table in self.tables]
+    
+        await asyncio.gather(*coroutines)
         self.reorganize_tables()
 
     @staticmethod
