@@ -1,22 +1,21 @@
+import os
+import asyncio
 from config import PokerTournamentConfig
 from player import PokerPlayer
 from poker_game import PokerGame
 from logging_system import Logger
 from database import TournamentDatabase
 from utils import generate_player_name
-import os
 
 def setup_tournament(num_players=160, load_previous_state=False):
-    # Инициализация конфигурации турнира
+    """Инициализация турнира, создание игроков и загрузка состояний если необходимо."""
     config = PokerTournamentConfig()
     
-    # Создаем игроков с уникальными именами и распределяем стартовый стек
     players = []
     for i in range(num_players):
         player_name = generate_player_name()
         player = PokerPlayer(player_name, config.starting_stack)
         
-        # Загрузить предыдущее состояние, если необходимо
         if load_previous_state and os.path.exists(f"{player_name}_state.pkl"):
             player.load_state(f"{player_name}_state.pkl")
         
@@ -24,13 +23,15 @@ def setup_tournament(num_players=160, load_previous_state=False):
     
     return PokerGame(players, config)
 
-def main():
+async def main():
+    """Основная функция запуска турнира."""
+    
     num_players = 160  # Настройка количества игроков
-
-    # Инициализация базы данных для хранения результатов
+    
+    # Инициализация базы данных
     db = TournamentDatabase()
     
-    # Инициализация логгера для ведения журнала событий
+    # Инициация логгера
     logger = Logger()
     
     # Настройка и запуск турнира
@@ -40,26 +41,29 @@ def main():
     # Логгирование события: старт турнира
     logger.log_event("Tournament started")
     
-    # Запуск симуляции турнира
-    game.simulate_tournament()
+    try:
+        # Запуск симуляции турнира
+        await game.simulate_tournament()
     
-    # Сохранение данных игроков и их действий после завершения турнира
-    for player in game.players:
-        logger.log_event(f"{player.name} ended the game with a stack of {player.stack}")
-        
-        # Сохраняем результаты игрока в базу данных
-        player_id = db.save_player(player)
-        
-        # Сохраняем действия игрока (историю)
-        for action in player.history:
-            profit = player.stack - player.initial_stack
-            db.save_game(player_id, action["decision"], profit)
-        
-        # Сохранение состояния игрока
-        player.save_state()
+        # Сохранение результатов турнира
+        for player in game.players:
+            logger.log_event(f"{player.name} ended the game with a stack of {player.stack}")
+            
+            # Сохранение результатов в базу данных
+            player_id = db.save_player(player)
+            
+            # Сохранение истории действий игрока
+            for action in player.history:
+                profit = player.stack - player.initial_stack
+                db.save_game(player_id, action["decision"], profit)
+            
+            # Сохранение состояния игрока
+            player.save_state()
 
-    # Логгирование события: завершение турнира
-    logger.log_event("Tournament finished")
+        # Логгирование события: завершение турнира
+        logger.log_event("Tournament finished")
+    except Exception as e:
+        logger.log_event(f"An error occurred: {str(e)}")
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
