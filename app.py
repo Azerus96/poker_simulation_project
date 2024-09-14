@@ -28,10 +28,10 @@ async def main():
     
     num_players = 160  # Настройка количества игроков
     
-    # Инициализация базы данных
+    # Инициализация базы данных для хранения результатов
     db = TournamentDatabase()
     
-    # Инициация логгера
+    # Инициализация логгера для ведения журнала событий
     logger = Logger()
     
     # Настройка и запуск турнира
@@ -45,9 +45,9 @@ async def main():
         # Запуск симуляции турнира
         await game.simulate_tournament()
     
-        # Сохранение результатов турнира
+        # Сохранение данных игроков и их действий после завершения турнира
         for player in game.players:
-            logger.log_event(f"{player.name} ended the game with a stack of {player.stack}")
+            logger.log_event(f"{player.name} закончил игру с стеком {player.stack}")
             
             # Сохранение результатов в базу данных
             player_id = db.save_player(player)
@@ -63,6 +63,7 @@ async def main():
         # Логгирование события: завершение турнира
         logger.log_event("Tournament finished")
     except Exception as e:
+        # Логгирование возникновения ошибки
         logger.log_event(f"An error occurred: {str(e)}")
 
 if __name__ == "__main__":
